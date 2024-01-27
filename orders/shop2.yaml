@@ -1,0 +1,57 @@
+shop: DNC
+categories:
+  - id: 223
+    name: Смартфоны
+  - id: 15
+    name: Аксессуары
+  - id: 1
+    name: Flash-накопители
+
+goods:
+  - id: 4216292
+    category: 223
+    model: apple/iphone/xs-max
+    name: Смартфон Apple iPhone XS Max 512GB (золотистый)
+    price: 115000
+    price_rrc: 116990
+    quantity: 24
+    parameters:
+      "Диагональ (дюйм)": 6.5
+      "Разрешение (пикс)": 2688x1242
+      "Встроенная память (Гб)": 512
+      "Цвет": золотистый
+  - id: 123123123
+    category: 223
+    model: honor/x7/a
+    name: Смартфон HONOR X7A (черный)
+    price: 10000
+    price_rrc: 11000
+    quantity: 109
+    parameters:
+      "Диагональ (дюйм)": 5
+      "Разрешение (пикс)": 1792x828
+      "Встроенная память (Гб)": 8
+      "Цвет": черный
+  - id: 456456
+    category: 15
+    model: apple/samsung
+    name: Наушники беспроводные (черные)
+    price: 3000
+    price_rrc: 3500
+    quantity: 556
+    parameters:
+      "Длина шнура(м)" : 1
+      "Материал" : "дерево"
+      "Цвет": черный
+  - id: 4567456
+    category: 224
+    model: apple/iphone/xr
+    name: Смартфон Apple iPhone XR 128GB (синий)
+    price: 62000
+    price_rrc: 64990
+    quantity: 88
+    parameters:
+      "Диагональ (дюйм)": 6.1
+      "Разрешение (пикс)": 1792x828
+      "Встроенная память (Гб)": 256
+      "Цвет": синий

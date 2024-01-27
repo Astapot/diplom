@@ -1,0 +1,81 @@
+@baseUrl = http://localhost:8000/
+
+
+POST {{baseUrl}}api/user/
+Content-Type: application/json
+
+{
+    "username": "Astapot",
+    "password": "1",
+    "type": "shop",
+    "email": "myagkovmacsim@yandex.ru"
+
+}
+
+###
+
+# GET {{baseUrl}}api/user/1/
+# Content-Type: application/json
+
+###
+
+POST {{baseUrl}}partner/update
+Content-Type: application/json
+
+{
+    "filename": "shop1.yaml"
+
+}
+
+###
+
+POST {{baseUrl}}registration/
+Content-Type: application/json
+
+{
+    "first_name": "user1",
+    "last_name": "user1",
+    "password": "password1",
+    "email": "user8@yandex.ru"
+
+}
+
+###
+
+POST {{baseUrl}}login/
+Content-Type: application/json
+
+{
+    "password": "password1",
+    "email": "user8@yandex.ru"
+
+}
+
+###
+
+DELETE {{baseUrl}}registration/
+Content-Type: application/json
+Authorization: Token nqBqgsPrtJ5-c0LCS-1OUg
+
+{
+    "user_id": 16
+
+
+}
+
+###
+
+DELETE {{baseUrl}}login/
+Content-Type: application/json
+Authorization: Token 8JQVX6tu5vE6Vq396WuY0Q
+
+{
+    "user_id": 17
+
+
+}
+
+###
+
+GET {{baseUrl}}products/
+# Content-Type: application/json
