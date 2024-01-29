@@ -1,0 +1,61 @@
+shop: MVideo
+categories:
+  - id: 224
+    name: Смартфоны
+  - id: 15
+    name: Аксессуары
+  - id: 1
+    name: Flash-накопители
+  - id: 5
+    name: Компьютеры
+
+goods:
+  - id: 4216292
+    category: 224
+    model: apple/iphone/xs-max
+    name: Смартфон Apple iPhone XS Max 512GB (золотистый)
+    price: 116000
+    price_rrc: 116990
+    quantity: 100
+    parameters:
+      "Диагональ (дюйм)": 6.5
+      "Разрешение (пикс)": 2688x1242
+      "Встроенная память (Гб)": 512
+      "Цвет": золотистый
+  - id: 123123123
+    category: 224
+    model: lg/l3
+    name: Смартфон LG L3 (черный)
+    price: 9000
+    price_rrc: 11000
+    quantity: 99
+    parameters:
+      "Диагональ (дюйм)": 5
+      "Разрешение (пикс)": 1792x828
+      "Встроенная память (Гб)": 3
+      "Цвет": черный
+  - id: 456456
+    category: 1
+    model: flash/32
+    name: Флэшка 32 гб
+    price: 3000
+    price_rrc: 3500
+    quantity: 556
+    parameters:
+      "Внешний вид" : стандарт
+      "Материал" : "дерево"
+      "Цвет": черный
+  - id: 4567456
+    category: 5
+    model: gigabyte/A1
+    name: GIGABYTE A1 16 gb 500 ssd (черный)
+    price: 85999
+    price_rrc: 90000
+    quantity: 10
+    parameters:
+      "Диагональ (дюйм)": 15
+      "Разрешение (пикс)": 1792x828
+      "Встроенная память (Гб)": 512
+      "Цвет": черный
+      "Оперативная память (гб)": 16
+      "Видеокарта (гб)": 8

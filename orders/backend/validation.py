@@ -1,6 +1,11 @@
 from .models import MyUser, Token, Contact
 import pdb
 # pdb.set_trace()
+
+""" 
+    здесь валидация, в основном проверяется наличие данных в запросе
+    самая полезная validate_and_get_user присылает пользователя если все ок, или возвращает ошибку
+"""
 def check_yaml_partner(yaml_file):
 
     array_of_keys = ['shop', 'categories', 'goods']
@@ -96,3 +101,15 @@ def validate_data_contact(data, user_id):
         return True
     return {'no id': 'in data'}
 
+def validate_confirmation_new_order(data):
+    """
+    Проверяет есть ли все параметры в данных для подтверждения нового заказа
+
+    :param data:
+    :return: True если все ок, dict если чего-то не хватает
+    """
+    validate_data = ['order_id', 'contact_id']
+    for i in validate_data:
+        if i not in data:
+            return {f'give {i}': 'check data'}
+    return True

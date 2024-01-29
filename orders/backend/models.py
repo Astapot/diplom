@@ -159,7 +159,7 @@ class Order(models.Model):
     contact = models.ForeignKey(Contact, verbose_name='Контакт',
                                 blank=True, null=True,
                                 on_delete=models.CASCADE)
-    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='orders')
+
 
     class Meta:
         verbose_name = 'Заказ'
@@ -178,6 +178,7 @@ class OrderItem(models.Model):
                                      blank=True,
                                      on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(verbose_name='Количество')
+    assembled = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = 'Заказанная позиция'
@@ -192,3 +193,11 @@ class OrderItem(models.Model):
                 f' quantity - {self.quantity}'
                 )
 
+
+# class NewOrderCodes(models.Model):
+#     user = models.ForeignKey(MyUser, related_name='neworder_codes', blank=True, on_delete=models.CASCADE)
+#     order = models.ForeignKey(Order, related_name='new_codes', blank=True, on_delete=models.CASCADE)
+#     code = models.IntegerField()
+#
+#     def __str__(self):
+#         return self.code

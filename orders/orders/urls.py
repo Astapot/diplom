@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 from backend.views import (PartnerUpdate, MyUserRegistration, UserLogin, ProductsView, ProductDetailView, BasketView,
-                           ContactView, NewOrdersView, )
+                           ContactView, ConfirmationView, AssembleView)
 
 from rest_framework.routers import DefaultRouter
 
@@ -38,5 +38,6 @@ urlpatterns = [
     path('products/<int:id>/', ProductDetailView.as_view()),
     path('basket/', BasketView.as_view()),
     path('contacts/', ContactView.as_view()),
-    path('neworders/', NewOrdersView.as_view())
+    path('confirmation/', ConfirmationView.as_view()),
+    path('assembly/', AssembleView.as_view()),
 ]
