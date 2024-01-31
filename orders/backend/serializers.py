@@ -36,10 +36,11 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = '__all__'
 
+class ProductInfoSerializer(serializers.ModelSerializer):
 
-
-
-
+    class Meta:
+        model = ProductInfo
+        fields = '__all__'
 
     # def update(self, instance, validated_data):
     #     instance.password = validated_data.get('password', instance.password)

@@ -4,7 +4,8 @@ from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
-from .serializers import MyUserSerializer, ContactSerializer, OrderSerializer, OrderItemSerializer
+from .serializers import MyUserSerializer, ContactSerializer, OrderSerializer, OrderItemSerializer, \
+    ProductInfoSerializer
 from .models import MyUser, Shop, Category, Product, ProductInfo, Parameter, ProductParameter, Token, Contact, Order, \
     STATE_CHOICES, OrderItem
 import yaml
@@ -509,6 +510,7 @@ class BasketView(APIView):
             if type(result) is dict:
                 return JsonResponse(result)
 
+        #валидаация для предметов в заказе
         if ordered_items:
             request.data.pop('ordered_items')
             if type(ordered_items) is not list:
@@ -517,12 +519,26 @@ class BasketView(APIView):
                 if type(ordered_items[0]) is not dict:
                     return JsonResponse({'ordered_items': 'must be a dicts in list'})
 
+
             for item in ordered_items:
-                if not item.get('product_info'):
+                product_info = item.get('product_info')
+                if not product_info:
                     return JsonResponse({'check PRODUCT_INFO': 'in ordered items'})
                 if item.get('assembled'):
                     return JsonResponse({'assembled status': 'available for change only during assembly'})
+                it = ProductInfo.objects.filter(id=product_info)
+                if not it:
+                    return JsonResponse({'check PRODUCT_INFO': 'this id does not exist'})
+                it = it[0]
+                q = item.get('quantity')
+                if not q:
+                    return JsonResponse({'check QUANTITY': 'in ordered items'})
+                if type(q) != int or q <= 0:
+                    return JsonResponse({'QUANTITY': 'is positive integer! Check data'})
+                if q > it.quantity:
+                    return JsonResponse({f'u can order maximum {it.quantity} things': f'for product {it} ({it.product})'}, json_dumps_params={'ensure_ascii': False})
 
+            #создание\обновление предметов в заказе
             for item in ordered_items:
                 item['order'] = order.id
                 object = OrderItem.objects.filter(order=order.id, product_info=item['product_info'])
@@ -539,7 +555,7 @@ class BasketView(APIView):
                     else:
                         return JsonResponse(serializer.errors)
 
-
+        #обновление заказа
         serializer_order = OrderSerializer(order, data=request.data, partial=True)
         if serializer_order.is_valid():
             serializer_order.save()
@@ -744,12 +760,14 @@ class AssembleView(APIView):
                     continue
                 product_info = item.product_info
                 if product_info.shop in user.shops.all():
+                    product_id = product_info.id
                     name = product_info.product
                     shop = product_info.shop
                     price = product_info.price
                     quantity = item.quantity
                     assembled = item.assembled
                     res = {
+                        "id": product_id,
                         "name": str(name),
                         "shop": str(shop),
                         "price": price,
@@ -777,6 +795,22 @@ class AssembleView(APIView):
         if order.state != 'confirmed':
             return JsonResponse({'this func': 'for CONFIRMED orders'})
         ordered_items = order.ordered_items.all()
+
+        # валидация предметов в заказе по количеству
+        for item in ordered_items:
+            product_info = item.product_info
+            shop = product_info.shop
+            if shop in shops:
+                store_product = ProductInfo.objects.filter(id=product_info.id)
+                if not store_product:
+                    return JsonResponse({f'product with id {product_info.id} does not exist': 'call admin'})
+                store_product = store_product[0]
+                product_q = store_product.quantity
+                item_q = item.quantity
+                if item_q > product_q:
+                    return JsonResponse({f'there is not enough product in shop {shop}': 'call admin to cancel or change order'}, json_dumps_params={'ensure_ascii': False})
+
+        #изменение статуса предмета в заказе на собран + изменение количества на складе
         result_items = []
         for item in ordered_items:
             product_info = item.product_info
@@ -789,12 +823,19 @@ class AssembleView(APIView):
                 price = product_info.price
                 quantity = item.quantity
                 res = {
+                    "id": product_info.id,
                     "name": str(name),
                     "shop": str(shop),
                     "price": price,
                     "quantity": quantity
                 }
                 result_items.append(res)
+
+                store_product = ProductInfo.objects.filter(id=product_info.id)[0]
+                product_q = store_product.quantity
+                product_serializer = ProductInfoSerializer(item.product_info, data={'quantity': product_q - quantity}, partial=True)
+                if product_serializer.is_valid():
+                    product_serializer.save()
                 serializer = OrderItemSerializer(item, data={'assembled': True}, partial=True)
                 if serializer.is_valid():
                     serializer.save()
@@ -836,6 +877,19 @@ class AssembleView(APIView):
             return JsonResponse({'this func': 'for CONFIRMED orders'})
         if state != 'canceled':
             return JsonResponse({'this func change state': 'only on CANCELED'})
+
+        #возвращение товара насклад, если он был собран
+        for item in order.ordered_items.all():
+            if item.assembled:
+                product_info = item.product_info
+                product_serializer = ProductInfoSerializer(product_info, data={'quantity': product_info.quantity + item.quantity}, partial=True)
+                if product_serializer.is_valid():
+                    product_serializer.save()
+                orderitem_serializer = OrderItemSerializer(item, data={'assembled': False}, partial=True)
+                if orderitem_serializer.is_valid():
+                    orderitem_serializer.save()
+
+
         serializer = OrderSerializer(order, data={'state': 'canceled'}, partial=True)
         if serializer.is_valid():
             subject = "Change order state"
