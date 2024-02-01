@@ -1288,11 +1288,171 @@ class DeliveryView(APIView):
         return JsonResponse({'your orders with state canceled': 'were deleted'})
 
 
+class CancelView(APIView):
+    """
+    get: принимает токен покупателя или суперюзера
+    в случае суперюзера выдает все отмененные заказы
+    в случае покупателя выдает его отмененные заказы
+
+    post: принимает токен покупателя или суперюзера
+
+    param: order_id, state: basket
+
+    позволяет поменять статус заказа на корзину
+
+
+    delete: принимает токен покупателя или суперюзера
+
+    удаляет все заказы со статусом отмененный
+
+    """
+
+
+    def get(self, request):
+        answer = validate_and_get_user(request.headers)
+        if type(answer) is str:
+            return JsonResponse({answer: 'check data'})
+        user = list(answer.keys())[0]
+
+        if user.is_superuser:
+            orders = Order.objects.filter(state='canceled')
+            if not orders:
+                return JsonResponse({' There are no orders': 'with state CANCELED'})
+            dict_orders = {}
+            for order in orders:
+                dict_orders[str(order)] = str(order.user)
+
+            return JsonResponse(dict_orders)
+
+        else:
+            orders = Order.objects.filter(state='canceled', user=user.id)
+            if not orders:
+                return JsonResponse({' There are no orders': f'with state CANCELED from user {user}'})
+            dict_orders = {}
+            for order in orders:
+                order_items = []
+                for item in order.ordered_items.all():
+                    product_info = item.product_info
+
+                    product_id = product_info.id
+                    name = product_info.product
+                    shop = product_info.shop
+                    price = product_info.price
+                    quantity = item.quantity
+                    res = {
+                        "id": product_id,
+                        "name": str(name),
+                        "shop": str(shop),
+                        "price": price,
+                        "quantity": quantity,
+                    }
+                    order_items.append(res)
+                dict_orders[str(order)] = order_items
+                return JsonResponse(dict_orders, json_dumps_params={'ensure_ascii': False})
 
 
 
+    def post(self, request):
+        answer = validate_and_get_user(request.headers)
+        if type(answer) is str:
+            return JsonResponse({answer: 'check data'})
+        user = list(answer.keys())[0]
+        order_id = request.data.get('order_id')
+        if not order_id:
+            return JsonResponse({'give order_id': 'check data'})
+
+        state = request.data.get('state')
+        if not state or state != 'basket':
+            return JsonResponse({'give state': 'with value BASKET'})
+
+        if user.is_superuser:
+            order = Order.objects.filter(id=order_id, state='canceled')
+            if not order:
+                return JsonResponse({'no order with this id': 'or order is not canceled'})
+            order = order[0]
+            serializer = OrderSerializer(order, data={'state': 'basket'}, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse({str(order):'is BASKET now'})
+            return JsonResponse(serializer.errors)
+        else:
+            order = Order.objects.filter(id=order_id, state='canceled', user=user.id)
+            if not order:
+                return JsonResponse({'error with data': 'check id, state(canceled) and owner of order'})
+            order = order[0]
+            serializer_buyer = OrderSerializer(order, data={'state': 'basket'}, partial=True)
+            if serializer_buyer.is_valid():
+                serializer_buyer.save()
+                return JsonResponse({str(order):'is BASKET now'})
+            return JsonResponse(serializer.errors)
+
+    def delete(self, request):
+        answer = validate_and_get_user(request.headers)
+        if type(answer) is str:
+            return JsonResponse({answer: 'check data'})
+        user = list(answer.keys())[0]
+        if user.is_superuser:
+            orders = Order.objects.filter(state='canceled').delete()
+            return JsonResponse({'orders with state "CANCELED"': 'were deleted'})
+        orders = Order.objects.filter(state='canceled', user=user.id).delete()
+        return JsonResponse({'your orders with state canceled': 'were deleted'})
 
 
+class HistoryView(APIView):
+
+    " get : принимает токен покупателя, возвращает все его заказы"
+    def get(self, request):
+        answer = validate_and_get_user(request.headers)
+        if type(answer) is str:
+            return JsonResponse({answer: 'check data'})
+        user = list(answer.keys())[0]
+
+        if user.type != 'buyer':
+            return JsonResponse({'this func': 'only for buyers'})
+
+        orders = Order.objects.filter(user=user.id)
+        if not orders:
+            return JsonResponse({'u have no orders': 'make something!'})
+        dict_orders = {}
+        for order in orders:
+            dict_orders[str(order)] = order.state
+        return JsonResponse(dict_orders)
+
+class HistoryDetailView(APIView):
+    """
+    get: принимает токен покупателя и id ордера в ссылке, возвращает подробную информацию о заказе
+
+    """
+    def get(self, request, id):
+        answer = validate_and_get_user(request.headers)
+        if type(answer) is str:
+            return JsonResponse({answer: 'check data'})
+        user = list(answer.keys())[0]
+
+        if user.type != 'buyer':
+            return JsonResponse({'this func': 'only for buyers'})
+
+        order = Order.objects.filter(id=id)
+        if not order:
+            return JsonResponse({'this order': 'does not exist'})
+        order = order[0]
+        order_items = []
+        for item in order.ordered_items.all():
+            product_info = item.product_info
+            product_id = product_info.id
+            name = product_info.product
+            shop = product_info.shop
+            price = product_info.price
+            quantity = item.quantity
+            res = {
+                "id": product_id,
+                "name": str(name),
+                "shop": str(shop),
+                "price": price,
+                "quantity": quantity,
+            }
+            order_items.append(res)
+        return JsonResponse({str(order): order_items}, json_dumps_params={'ensure_ascii': False})
 
 
 
