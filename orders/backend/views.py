@@ -510,7 +510,7 @@ class BasketView(APIView):
             if type(result) is dict:
                 return JsonResponse(result)
 
-        #валидаация для предметов в заказе
+        #валидация для предметов в заказе
         if ordered_items:
             request.data.pop('ordered_items')
             if type(ordered_items) is not list:
@@ -525,7 +525,9 @@ class BasketView(APIView):
                 if not product_info:
                     return JsonResponse({'check PRODUCT_INFO': 'in ordered items'})
                 if item.get('assembled'):
-                    return JsonResponse({'assembled status': 'available for change only during assembly'})
+                    return JsonResponse({'ASSEMBLED status': 'available for change only during assembly'})
+                if item.get('sent'):
+                    return JsonResponse({'SENT status': 'available for change only during sending'})
                 it = ProductInfo.objects.filter(id=product_info)
                 if not it:
                     return JsonResponse({'check PRODUCT_INFO': 'this id does not exist'})
@@ -565,8 +567,12 @@ class BasketView(APIView):
             # NewOrderCodes.objects.create(user=user.id, order=order.id, code=code)
             message = f"Your order state changed to 'NEW', to confirm use order_id: {order_id}, contact_id {contact}"
 
-            send_mail(subject=subject, message=message, from_email=settings.EMAIL_HOST_USER, recipient_list=[user.email],
-                      fail_silently=False, )
+            try:
+                send_mail(subject=subject, message=message, from_email=settings.EMAIL_HOST_USER,
+                          recipient_list=[user.email],
+                          fail_silently=False, )
+            except Exception as er:
+                return JsonResponse({'problems with email, call admin': str(er)})
 
         return JsonResponse({f'order with id {order.id}': 'was patched successfully'})
 
@@ -788,6 +794,8 @@ class AssembleView(APIView):
             return JsonResponse({'this function': 'only for shop'})
         shops = user.shops.all()
         order_id = request.data.get('order_id')
+        if not order_id:
+            return JsonResponse({'give order_id': 'check data'})
         order = Order.objects.filter(id=order_id)
         if not order:
             return JsonResponse({f'order with id {order_id}': 'does not exist'})
@@ -798,6 +806,8 @@ class AssembleView(APIView):
 
         # валидация предметов в заказе по количеству
         for item in ordered_items:
+            if item.get('sended'):
+                return JsonResponse({'SENDED status': 'available for change only during sending'})
             product_info = item.product_info
             shop = product_info.shop
             if shop in shops:
@@ -897,17 +907,13 @@ class AssembleView(APIView):
                 f"Your {str(order)} state changed to 'CANCELED' by user {user.username} ({', '.join([str(shop) for shop in user.shops.all()])}), if something"
                 f" wrong - contact us")
 
-            send_mail(subject=subject, message=message, from_email=settings.EMAIL_HOST_USER,
-                      recipient_list=[order.user.email],
-                      fail_silently=False, )
+            try:
+                send_mail(subject=subject, message=message, from_email=settings.EMAIL_HOST_USER,
+                          recipient_list=[order.user.email],
+                          fail_silently=False, )
+            except Exception as er:
+                return JsonResponse({'problems with email, call admin': str(er)})
             serializer.save()
-
-            # message = (f"Your {str(order)} state changed to 'CANCELED' by user {user.username} ({user.shops.all()}), if something"
-            #            f"wrong - contact us")
-            #
-            # send_mail(subject=subject, message=message, from_email=settings.EMAIL_HOST_USER,
-            #           recipient_list=[order.user.email],
-            #           fail_silently=False, )
             return JsonResponse({str(order): 'change state', 'state': 'CANCELED'})
 
     def delete(self, request):
@@ -920,6 +926,375 @@ class AssembleView(APIView):
             return JsonResponse({'orders with state "CANCELED"': 'were deleted'})
         orders = Order.objects.filter(state='canceled', user=user.id).delete()
         return JsonResponse({'your orders with state canceled': 'were deleted'})
+
+
+class SendOrderView(APIView):
+    """
+    get: принимает токен магазина
+
+    выдает информацию по собранным заказам с товарами данного магазина
+
+    post: принимает токен магазина
+
+    параметры: order_id
+
+    помечает товары в ордере, принадлежащие данному пользователю, как отправленные, если в заказе все товары отправлены
+    то весь ордер помечается отправленным
+
+    patch: принимает токен супер юзера
+    параметры: order_id, state : canceled
+
+    меняет статус заказа на отмененный и возвращает товары на склад
+
+    delete: принимает токен покупателя или суперюзера
+
+    удаляет все заказы со статусом отмененный
+
+
+    """
+
+
+
+    def get(self, request):
+        #получение пользователя и проверка на магазин
+        answer = validate_and_get_user(request.headers)
+        if type(answer) is str:
+            return JsonResponse({answer: 'check data'})
+        user = list(answer.keys())[0]
+        if user.type != 'shop':
+            return JsonResponse({'this function': 'only for shop'})
+
+        orders = Order.objects.filter(state='assembled')
+        if not orders:
+            return JsonResponse({'There are': 'no ASSEMBLED orders!'})
+        assembled_orders = []
+
+        #получение ордеров
+        for order in orders:
+            order_items = []
+            for item in order.ordered_items.all():
+                if item.sent:
+                    continue
+                product_info = item.product_info
+                if product_info.shop in user.shops.all():
+                    product_id = product_info.id
+                    name = product_info.product
+                    shop = product_info.shop
+                    price = product_info.price
+                    quantity = item.quantity
+                    assembled = item.assembled
+                    res = {
+                        "id": product_id,
+                        "name": str(name),
+                        "shop": str(shop),
+                        "price": price,
+                        "quantity": quantity,
+                        "assembled": assembled
+                    }
+                    order_items.append(res)
+            if order_items:
+                assembled_orders.append({str(order): order_items})
+        return JsonResponse({'ASSEMBLED orders': assembled_orders}, json_dumps_params={'ensure_ascii': False})
+
+
+    def post(self, request):
+        # получение пользователя и проверка на магазин
+        answer = validate_and_get_user(request.headers)
+        if type(answer) is str:
+            return JsonResponse({answer: 'check data'})
+        user = list(answer.keys())[0]
+        if user.type != 'shop':
+            return JsonResponse({'this function': 'only for shop'})
+
+        #получение магазинов пользователя и заказа
+        shops = user.shops.all()
+        order_id = request.data.get('order_id')
+        if not order_id:
+            return JsonResponse({'give order_id': 'check data'})
+        order = Order.objects.filter(id=order_id)
+        if not order:
+            return JsonResponse({f'order with id {order_id}': 'does not exist'})
+        order = order[0]
+        if order.state != 'assembled':
+            return JsonResponse({'this function': 'only for assembled orders'})
+
+        #изменяет статус на отправлен
+        order_items = []
+        for item in order.ordered_items.all():
+            if item.product_info.shop in user.shops.all():
+                if not item.sent:
+                    item_serializer = OrderItemSerializer(item, data={'sent': True}, partial=True)
+                    if item_serializer.is_valid():
+                        item_serializer.save()
+
+                        product_info = item.product_info
+                        product_id = product_info.id
+                        name = product_info.product
+                        shop = product_info.shop
+                        price = product_info.price
+                        quantity = item.quantity
+                        assembled = item.assembled
+                        res = {
+                            "id": product_id,
+                            "name": str(name),
+                            "shop": str(shop),
+                            "price": price,
+                            "quantity": quantity,
+                            "assembled": assembled
+                        }
+                        order_items.append(res)
+        # если все товары со статусом отправлен, то ордер тоже помечается отправлен
+        for item in order.ordered_items.all():
+            if not item.sent:
+                break
+        else:
+            order_serializer = OrderSerializer(order, data={'state': 'sent'}, partial=True)
+            if order_serializer.is_valid():
+                order_serializer.save()
+                return JsonResponse(
+                    {
+                        str(order): 'state changed to SENT',
+                        'U sent items': order_items
+                    },
+                    json_dumps_params={'ensure_ascii': False})
+            return JsonResponse(order_serializer.errors)
+        return JsonResponse({'U sent items': order_items}, json_dumps_params={'ensure_ascii': False})
+
+    def patch(self, request):
+        #получаем пользователя и проверяем что это суперюзер
+        answer = validate_and_get_user(request.headers)
+        if type(answer) is str:
+            return JsonResponse({answer: 'check data'})
+        user = list(answer.keys())[0]
+        if not user.is_superuser:
+            return JsonResponse({'only admin can cancel confirmed order': 'call admin'})
+        # if user.type != 'shop':
+        #     return JsonResponse({'this function': 'only for shop'})
+
+
+        order_id = request.data.get('order_id')
+        if not order_id:
+            return JsonResponse({'give order_id': 'check data'})
+        state = request.data.get('state')
+        if not state:
+            return JsonResponse({'this func change state': 'give state'})
+        order = Order.objects.filter(id=order_id)
+
+        if not order:
+            return JsonResponse({f'order with id {order_id}': 'does not exist'})
+        order = order[0]
+        if order.state != 'assembled':
+            return JsonResponse({'this func': 'for assembled orders'})
+        if state != 'canceled':
+            return JsonResponse({'this func change state': 'only on CANCELED'})
+
+        #возвращение товара насклад, если он был собран
+        for item in order.ordered_items.all():
+            if item.assembled:
+                product_info = item.product_info
+                product_serializer = ProductInfoSerializer(product_info, data={'quantity': product_info.quantity + item.quantity}, partial=True)
+                if product_serializer.is_valid():
+                    product_serializer.save()
+                orderitem_serializer = OrderItemSerializer(item, data={'assembled': False}, partial=True)
+                if orderitem_serializer.is_valid():
+                    orderitem_serializer.save()
+
+
+        serializer = OrderSerializer(order, data={'state': 'canceled'}, partial=True)
+        if serializer.is_valid():
+            subject = "Change order state"
+            message = (
+                f"Your {str(order)} state changed to 'CANCELED' by user {user.username} ({', '.join([str(shop) for shop in user.shops.all()])}), if something"
+                f" wrong - contact us")
+            try:
+                send_mail(subject=subject, message=message, from_email=settings.EMAIL_HOST_USER,
+                          recipient_list=[order.user.email],
+                          fail_silently=False, )
+            except Exception as er:
+                return JsonResponse({'problems with email, call admin': str(er)})
+
+            serializer.save()
+            return JsonResponse({str(order): 'change state', 'state': 'CANCELED'})
+
+    def delete(self, request):
+        answer = validate_and_get_user(request.headers)
+        if type(answer) is str:
+            return JsonResponse({answer: 'check data'})
+        user = list(answer.keys())[0]
+        if user.is_superuser:
+            orders = Order.objects.filter(state='canceled').delete()
+            return JsonResponse({'orders with state "CANCELED"': 'were deleted'})
+        orders = Order.objects.filter(state='canceled', user=user.id).delete()
+        return JsonResponse({'your orders with state canceled': 'were deleted'})
+
+
+class DeliveryView(APIView):
+    """
+ get: принимает токен пользователя
+
+     выдает информацию по отправленным заказам у данного пользователя
+
+  post: принимает токен покупателя
+
+    параметры: order_id
+
+    помечает заказ доставленным
+
+    patch: принимает токен суперюзера
+    параметры: order_id, state : canceled
+
+    меняет статус заказа на отмененный и возвращает товары на склад
+
+    delete: принимает токен покупателя или суперюзера
+
+    удаляет все заказы со статусом отмененный
+
+    """
+
+    def get(self, request):
+
+        answer = validate_and_get_user(request.headers)
+        if type(answer) is str:
+            return JsonResponse({answer: 'check data'})
+        user = list(answer.keys())[0]
+        if user.type != 'buyer':
+            return JsonResponse({'this function': 'only for buyers'})
+
+        # получение заказа
+        orders = Order.objects.filter(state='sent', user=user.id)
+        if not orders:
+            return JsonResponse({'There are': 'no SENT orders!'})
+
+        sent_orders = []
+
+        # получение ордеров
+        for order in orders:
+            order_items = []
+            for item in order.ordered_items.all():
+                product_info = item.product_info
+
+                product_id = product_info.id
+                name = product_info.product
+                shop = product_info.shop
+                price = product_info.price
+                quantity = item.quantity
+                res = {
+                    "id": product_id,
+                    "name": str(name),
+                    "shop": str(shop),
+                    "price": price,
+                    "quantity": quantity,
+                }
+                order_items.append(res)
+            if order_items:
+                sent_orders.append({str(order): order_items})
+        return JsonResponse({'SENT orders': sent_orders}, json_dumps_params={'ensure_ascii': False})
+
+
+    def post(self, request):
+        # получение пользователя и проверка на покупателя
+        answer = validate_and_get_user(request.headers)
+        if type(answer) is str:
+            return JsonResponse({answer: 'check data'})
+        user = list(answer.keys())[0]
+        if user.type != 'buyer':
+            return JsonResponse({'this function': 'only for buyer'})
+
+        #получение заказа
+        order_id = request.data.get('order_id')
+        if not order_id:
+            return JsonResponse({'give order_id': 'check data'})
+        order = Order.objects.filter(id=order_id)
+        if not order:
+            return JsonResponse({f'order with id {order_id}': 'does not exist'})
+        order = order[0]
+        if order.user.id != user.id:
+            return JsonResponse({f'order with id {order_id}': 'not yours'})
+        if order.state != 'sent':
+            return JsonResponse({'this function': 'only for sent orders'})
+
+        #изменяет статус на доставлен
+        serializer = OrderSerializer(order, data={'state': 'delivered'}, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse({str(order): 'is delivered'})
+
+    def patch(self, request):
+        def patch(self, request):
+            # получаем пользователя и проверяем что это суперюзер
+            answer = validate_and_get_user(request.headers)
+            if type(answer) is str:
+                return JsonResponse({answer: 'check data'})
+            user = list(answer.keys())[0]
+            if not user.is_superuser:
+                return JsonResponse({'only admin can cancel confirmed order': 'call admin'})
+            # if user.type != 'shop':
+            #     return JsonResponse({'this function': 'only for shop'})
+
+            order_id = request.data.get('order_id')
+            if not order_id:
+                return JsonResponse({'give order_id': 'check data'})
+            state = request.data.get('state')
+            if not state:
+                return JsonResponse({'this func change state': 'give state'})
+            order = Order.objects.filter(id=order_id)
+
+            if not order:
+                return JsonResponse({f'order with id {order_id}': 'does not exist'})
+            order = order[0]
+            if order.state != 'assembled':
+                return JsonResponse({'this func': 'for assembled orders'})
+            if state != 'canceled':
+                return JsonResponse({'this func change state': 'only on CANCELED'})
+
+            # возвращение товара насклад, если он был собран
+            for item in order.ordered_items.all():
+                if item.assembled:
+                    product_info = item.product_info
+                    product_serializer = ProductInfoSerializer(product_info,
+                                                               data={'quantity': product_info.quantity + item.quantity},
+                                                               partial=True)
+                    if product_serializer.is_valid():
+                        product_serializer.save()
+                    orderitem_serializer = OrderItemSerializer(item, data={'assembled': False}, partial=True)
+                    if orderitem_serializer.is_valid():
+                        orderitem_serializer.save()
+
+            serializer = OrderSerializer(order, data={'state': 'canceled'}, partial=True)
+            if serializer.is_valid():
+                subject = "Change order state"
+                message = (
+                    f"Your {str(order)} state changed to 'CANCELED' by user {user.username} ({', '.join([str(shop) for shop in user.shops.all()])}), if something"
+                    f" wrong - contact us")
+                try:
+                    send_mail(subject=subject, message=message, from_email=settings.EMAIL_HOST_USER,
+                              recipient_list=[order.user.email],
+                              fail_silently=False, )
+                except Exception as er:
+                    return JsonResponse({'problems with email, call admin': str(er)})
+
+                serializer.save()
+                return JsonResponse({str(order): 'change state', 'state': 'CANCELED'})
+
+    def delete(self, request):
+        answer = validate_and_get_user(request.headers)
+        if type(answer) is str:
+            return JsonResponse({answer: 'check data'})
+        user = list(answer.keys())[0]
+        if user.is_superuser:
+            orders = Order.objects.filter(state='canceled').delete()
+            return JsonResponse({'orders with state "CANCELED"': 'were deleted'})
+        orders = Order.objects.filter(state='canceled', user=user.id).delete()
+        return JsonResponse({'your orders with state canceled': 'were deleted'})
+
+
+
+
+
+
+
+
+
 
 
 

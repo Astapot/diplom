@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 from backend.views import (PartnerUpdate, MyUserRegistration, UserLogin, ProductsView, ProductDetailView, BasketView,
-                           ContactView, ConfirmationView, AssembleView)
+                           ContactView, ConfirmationView, AssembleView, SendOrderView, DeliveryView)
 
 from rest_framework.routers import DefaultRouter
 
@@ -40,4 +40,6 @@ urlpatterns = [
     path('contacts/', ContactView.as_view()),
     path('confirmation/', ConfirmationView.as_view()),
     path('assembly/', AssembleView.as_view()),
+    path('send/', SendOrderView.as_view()),
+    path('delivery/', DeliveryView.as_view()),
 ]

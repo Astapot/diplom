@@ -179,6 +179,7 @@ class OrderItem(models.Model):
                                      on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(verbose_name='Количество')
     assembled = models.BooleanField(default=False)
+    sent = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = 'Заказанная позиция'
