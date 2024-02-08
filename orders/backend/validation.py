@@ -113,3 +113,4 @@ def validate_confirmation_new_order(data):
         if i not in data:
             return {f'give {i}': 'check data'}
     return True
+

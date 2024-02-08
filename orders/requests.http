@@ -21,9 +21,21 @@ Content-Type: application/json
 
 POST {{baseUrl}}partner/update
 Content-Type: application/json
+Authorization: Token tQ8_eoG5aqCr5K88tP1-yQ
 
 {
-    "filename": "shop1.yaml"
+    "filename": "shop2.yaml"
+
+}
+
+###
+
+POST {{baseUrl}}partner/update
+Content-Type: application/json
+Authorization: Token doFZfhQMMFgd6YCkCBEpmA
+
+{
+    "filename": "shop3.yaml"
 
 }
 
@@ -33,25 +45,76 @@ POST {{baseUrl}}registration/
 Content-Type: application/json
 
 {
-    "first_name": "user1",
-    "last_name": "user1",
+    "first_name": "bogdan",
+    "last_name": "bulg",
     "password": "password1",
-    "email": "user8@yandex.ru"
+    "email": "mya"
 
 }
 
+
 ###
 
-POST {{baseUrl}}login/
+PATCH {{baseUrl}}registration/
 Content-Type: application/json
+Authorization: Token tQ8_eoG5aqCr5K88tP1-yQ
 
 {
-    "password": "password1",
-    "email": "user8@yandex.ru"
+    "user_id": 21,
+    "type": "shop"
 
 }
 
 ###
+
+PATCH {{baseUrl}}registration/
+Content-Type: application/json
+Authorization: Token doFZfhQMMFgd6YCkCBEpmA
+
+{
+    "type": "shop"
+
+}
+
+
+###
+
+PATCH {{baseUrl}}registration/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+{
+    "email": "myagkovmacsim@yandex.ru"
+ }
+
+###
+
+PATCH {{baseUrl}}registration/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+{
+    "username": "abc",
+    "password": "password2",
+    "email": "abcd@yandex.ru"
+ }
+
+
+
+###
+
+PATCH {{baseUrl}}registration/
+Content-Type: application/json
+Authorization: Token tQ8_eoG5aqCr5K88tP1-yQ
+
+{
+    "password": "password1"
+ }
+
+
+
+###
+
 
 DELETE {{baseUrl}}registration/
 Content-Type: application/json
@@ -65,17 +128,386 @@ Authorization: Token nqBqgsPrtJ5-c0LCS-1OUg
 
 ###
 
+POST {{baseUrl}}login/
+Content-Type: application/json
+
+{
+    "password": "password1",
+    "email": "myagkovmacsim9132@yandex.ru"
+
+}
+
+###
+
+
 DELETE {{baseUrl}}login/
 Content-Type: application/json
 Authorization: Token 8JQVX6tu5vE6Vq396WuY0Q
 
 {
-    "user_id": 17
+    "user_id": 11
 
 
 }
 
 ###
 
+GET {{baseUrl}}products/?category=Смартфоны&name=XR&shop=Связной
+
+###
+
+GET {{baseUrl}}products/4/
+
+###
+
+GET {{baseUrl}}products/?name=xS
+
+###
+
 GET {{baseUrl}}products/
-# Content-Type: application/json
+
+
+###
+
+POST {{baseUrl}}contacts/
+Content-Type: application/json
+Authorization: Token tQ8_eoG5aqCr5K88tP1-yQ
+
+{
+    "city": "voronezh",
+    "street": "street2",
+    "phone": "+799999999"
+
+}
+
+
+###
+
+POST {{baseUrl}}contacts/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+{
+    "city": "voronezh",
+    "street": "street2",
+    "phone": "+799999999"
+
+}
+
+###
+
+GET {{baseUrl}}contacts/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+###
+
+PATCH {{baseUrl}}contacts/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+{
+    "id" : "5",
+    "street": "street3",
+    "phone": "788888888"
+}
+
+###
+
+DELETE {{baseUrl}}contacts/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+{
+    "id" : "6"
+}
+
+
+###
+
+POST {{baseUrl}}basket/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+{
+    "contact": 8
+
+}
+
+###
+
+POST {{baseUrl}}basket/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+{
+    "contact": 8
+}
+
+###
+
+GET {{baseUrl}}basket/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+###
+
+PATCH {{baseUrl}}basket/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+{
+    "order_id": "15",
+    "contact": "4",
+    "ordered_items": [
+        {
+        "product_info": 42,
+        "quantity": 13
+        },
+        {
+        "product_info": 56,
+        "quantity": 30
+        },
+        {
+        "product_info": 59,
+        "quantity": 2
+        }
+    ]
+
+}
+
+###
+
+
+PATCH {{baseUrl}}basket/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+{
+    "order_id": "14",
+    "contact": "4",
+    "ordered_items": [
+        {
+        "product_info": 60,
+        "quantity": 3
+        },
+        {
+        "product_info": 56,
+        "quantity": 22
+        },
+        {
+        "product_info": 59,
+        "quantity": 2
+        }
+    ]
+
+}
+
+###
+
+PATCH {{baseUrl}}basket/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+{
+    "order_id": 15,
+    "state": "new"
+
+}
+
+###
+
+PATCH {{baseUrl}}basket/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+{
+    "order_id": "5",
+    "state": "canceled"
+
+
+}
+
+###
+
+DELETE {{baseUrl}}basket/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+
+###
+
+GET {{baseUrl}}confirmation/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+###
+
+POST {{baseUrl}}confirmation/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+{
+    "order_id": 14,
+    "contact_id": 4
+
+
+}
+
+###
+
+PATCH {{baseUrl}}confirmation/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+{
+    "order_id": 15,
+    "state": "canceled",
+    "contact_id": 4
+
+
+}
+
+###
+
+
+GET {{baseUrl}}assembly/
+Content-Type: application/json
+Authorization: Token tQ8_eoG5aqCr5K88tP1-yQ
+
+###
+
+###
+
+GET {{baseUrl}}assembly/
+Content-Type: application/json
+Authorization: Token doFZfhQMMFgd6YCkCBEpmA
+
+###
+
+POST {{baseUrl}}assembly/
+Content-Type: application/json
+Authorization: Token tQ8_eoG5aqCr5K88tP1-yQ
+
+{
+    "order_id": 14
+
+}
+
+
+###
+
+POST {{baseUrl}}assembly/
+Content-Type: application/json
+Authorization: Token doFZfhQMMFgd6YCkCBEpmA
+
+{
+    "order_id": 14
+
+}
+
+###
+
+PATCH {{baseUrl}}assembly/
+Content-Type: application/json
+Authorization: Token tQ8_eoG5aqCr5K88tP1-yQ
+
+{
+    "state": "canceled",
+    "order_id": 14
+}
+
+###
+
+GET {{baseUrl}}send/
+Content-Type: application/json
+Authorization: Token doFZfhQMMFgd6YCkCBEpmA
+
+###
+
+GET {{baseUrl}}send/
+Content-Type: application/json
+Authorization: Token tQ8_eoG5aqCr5K88tP1-yQ
+
+###
+
+POST {{baseUrl}}send/
+Content-Type: application/json
+Authorization: Token tQ8_eoG5aqCr5K88tP1-yQ
+
+{
+
+    "order_id": 14
+}
+
+###
+
+POST {{baseUrl}}send/
+Content-Type: application/json
+Authorization: Token doFZfhQMMFgd6YCkCBEpmA
+
+{
+
+    "order_id": 14
+}
+
+###
+
+PATCH {{baseUrl}}send/
+Content-Type: application/json
+Authorization: Token tQ8_eoG5aqCr5K88tP1-yQ
+
+{
+
+    "order_id": 14,
+    "state": "canceled"
+}
+
+
+###
+
+GET {{baseUrl}}delivery/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+###
+
+POST {{baseUrl}}delivery/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+{
+    "order_id": 14
+
+}
+
+###
+
+GET {{baseUrl}}canceled/
+Content-Type: application/json
+Authorization: Token tQ8_eoG5aqCr5K88tP1-yQ
+
+###
+
+POST {{baseUrl}}canceled/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+{
+
+    "order_id": 15,
+    "state": "basket"
+}
+
+###
+
+GET {{baseUrl}}history/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w
+
+
+###
+
+GET {{baseUrl}}history/14/
+Content-Type: application/json
+Authorization: Token EnLjdezkd3NrfpXO4E1z9w

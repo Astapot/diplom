@@ -1,0 +1,100 @@
+# version: '3.9'
+# services:
+
+#   db:
+#     image: postgres:12
+#     volumes:
+#     - ./postgres/data:/var/lib/postgresql/data
+#     - ./postgres/dumps:/dumps
+#     restart: always
+#     environment:
+#       POSTGRES_USER: ${POSTGRES_USER}
+#       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+#       POSTGRES_DB: ${POSTGRES_NAME}
+#     ports:
+#       - "5432:5432"
+
+# version: '3' 
+
+# services:
+#   db: 
+#     image: postgres:11-alpine
+#     env_file:
+#       - orders/.env
+#     volumes:
+#       - ./postgresql/dumps:/code/dumps
+#       - ./postgresql/data:/var/lib/postgresql/data
+#     restart: always
+#     ports:
+#       - "5432:5432"
+
+
+# version: '3.8'
+
+# services:
+#   db:
+#     image: postgres
+#     environment:
+#       POSTGRES_USER: ${POSTGRES_USER}
+#       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+#       POSTGRES_DB: ${POSTGRES_NAME}
+#     ports:
+#     - 5432:5432
+#     volumes:
+#     - ./data:/var/lib/postgresql/data
+
+    
+
+version: '3.8'
+
+services:
+  django:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+     - .:/usr/src/app
+    ports:
+     - "8000:8000"
+    depends_on:
+     - pgdb
+
+  pgdb:
+    image: postgres
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${POSTGRES_NAME}"
+    expose:
+    - ${POSTGRES_PORT}
+    volumes:
+    - pgdb:/var/lib/postgresql/data
+
+volumes:
+  pgdb: null
+
+# version: '3.8'
+
+# services:
+#   django:
+#     build: .
+#     command: python manage.py runserver 0.0.0.0:8000
+#     volumes:
+#      - .:/usr/src/app
+#     ports:
+#      - "8000:8000"
+#     depends_on:
+#      - pgdb
+
+#   pgdb:
+#     image: postgres
+#     environment:
+#       POSTGRES_USER: "postgres"
+#       POSTGRES_PASSWORD: "1"
+#       POSTGRES_DB: "diploms"
+#     ports:
+#     - "5432:5432"
+#     volumes:
+#     - pgdb:/var/lib/postgresql/data
+
+# volumes:
+#   pgdb: null
