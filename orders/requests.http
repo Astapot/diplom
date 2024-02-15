@@ -1,22 +1,6 @@
 @baseUrl = http://localhost:8000/
 
 
-POST {{baseUrl}}api/user/
-Content-Type: application/json
-
-{
-    "username": "Astapot",
-    "password": "1",
-    "type": "shop",
-    "email": "myagkovmacsim@yandex.ru"
-
-}
-
-###
-
-# GET {{baseUrl}}api/user/1/
-# Content-Type: application/json
-
 ###
 
 POST {{baseUrl}}partner/update
@@ -48,7 +32,7 @@ Content-Type: application/json
     "first_name": "bogdan",
     "last_name": "bulg",
     "password": "password1",
-    "email": "mya"
+    "email": "myag"
 
 }
 
@@ -66,6 +50,19 @@ Authorization: Token tQ8_eoG5aqCr5K88tP1-yQ
 }
 
 ###
+
+PATCH {{baseUrl}}registration/
+Content-Type: application/json
+Authorization: Token tQ8_eoG5aqCr5K88tP1-yQ
+
+{
+    "user_id": 1,
+    "password": "password1"
+
+}
+
+###
+
 
 PATCH {{baseUrl}}registration/
 Content-Type: application/json

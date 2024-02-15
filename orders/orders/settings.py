@@ -30,8 +30,8 @@ SECRET_KEY = 'django-insecure-mf9+n#ruwk(3%yur10=ue7*$jc7q!pbpi^q42hl9e-_d_$lef!
 # DEBUG = bool(os.getenv("DEBUG"))
 DEBUG = True
 
-# ALLOWED_HOSTS = ['*']
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(' ')
+ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(' ')
 
 
 # Application definition
@@ -85,8 +85,10 @@ WSGI_APPLICATION = 'orders.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_NAME'),
-        'HOST': os.getenv('DIPLOM_DOCKER_HOST'),
+        # 'NAME': os.getenv('POSTGRES_NAME'),
+        # 'HOST': os.getenv('DIPLOM_DOCKER_HOST'),
+        'NAME': os.getenv('POSTGRES_LOCAL_NAME'),
+        'HOST': os.getenv('POSTGRES_HOST'),
         'PORT': os.getenv('POSTGRES_PORT'),
         'USER': os.getenv('POSTGRES_USER'),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD')
@@ -127,7 +129,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'static/'
+# STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
+
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

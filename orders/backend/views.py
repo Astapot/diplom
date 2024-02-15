@@ -34,6 +34,12 @@ class MyUserRegistration(APIView):
         res = list(valid.values())[0]
         if res:
             password = bcrypt.hashpw(request.data['password'].encode(), bcrypt.gensalt()).decode()
+
+            # password_c = bcrypt.hashpw(request.data['password'].encode(), bcrypt.gensalt()).decode()
+            # print(password==password_c)
+            # print(bcrypt.checkpw(password.encode(), password_c.encode()))
+
+
             user = MyUser.objects.create(first_name=request.data['first_name'],
                                          password=password,
                                          last_name=request.data['last_name'],
